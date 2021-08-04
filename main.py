@@ -951,12 +951,53 @@ def getRentProperties():
 
 # These methods update the realWorth attribute of properties based on their neighbours
 
+def getWorthProperties():
+    for prop in properties:
+        prop.realWorth = prop.getInitialWorth()
+    for street in streets:
+        for currentProp in street:
+            neighboursOwnedByEve = 0
+            neighboursOwnedByUser = 0
+            for neighbour in street:
+                if neighbour != currentProp:
+                    if neighbour.owner == Eve:
+                        neighboursOwnedByEve += 1
+                    elif neighbour.owner == user:
+                        neighboursOwnedByUser += 1
 
+            if neighboursOwnedByEve > 0 and neighboursOwnedByUser > 0:
+                currentProp.realWorth -= 50
+            else:
+                currentProp.realWorth += 150 - (len(street)-neighboursOwnedByUser-neighboursOwnedByEve)*50
 
+            for house in range(currentProp.houses):
+                currentProp.realWorth += currentProp.houseWorth
 
-# -------------------------------------------------------------------------------
-#PIECES
+            if currentProp.mortgaged:
+                currentProp.realWorth -= currentProp.getPrice()//2
 
+def getWorthStations():
+    stations = [squares[5], squares[15], squares[25], squares[35]]
+    for station in stations:
+        station.realWorth = station.getInitialWorth()
+        neighboursOwnedByEve = 0
+        neighboursOwnedByUser = 0
+        for neighbour in stations:
+            if neighbour.owner == Eve:
+                neighboursOwnedByEve += 1
+            elif neighbour.owner == user:
+                neighboursOwnedByUser += 1
+        if neighboursOwnedByEve > 0 and neighboursOwnedByUser > 0:
+            station.realWorth += 25*(neighboursOwnedByEve + neighboursOwnedByUser)
+        else:
+            station.realWorth += 50 * (neighboursOwnedByEve + neighboursOwnedByUser)
+
+def getWorthUtilities():
+    utilities = [squares[12], squares[28]]
+    if utilities[1].owner != bank:
+        utilities[0].realWorth = utilities[0].getInitialWorth() + 50
+    if utilities[0].owner != bank:
+        utilities[1].realWorth = utilities[1].getInitialWorth() + 50
 
 
 # -------------------------------------------------------------------------------
