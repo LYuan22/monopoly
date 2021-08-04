@@ -3,6 +3,9 @@ import math
 import random
 import time
 from pygame import mixer
+from Player import Player, pieces
+
+
 
 # -------------------------------------------------------------------------------
 # SQUARE CLASSES
@@ -210,85 +213,7 @@ class SpecialSquares: # Applies to the squares on the corners.
 
 # -------------------------------------------------------------------------------
 # SPRITE CLASSES
-class Player: # Class for practical matters considering the user and Eve.
-    def __init__(self, name, isTurn, screens):
-        self.name = name
-        self.piece = None
-        self.boardpos = 0
-        self.timeMoving = 0
-        self.pieceSelected = False
-        self.pieceConfirmed = False
-        self.colour = None
-        self.isTurn = isTurn
-        self.money = 1500
-        self.screens = screens #
-        self.canRoll = True
-        self.doublesCount = 0
-        self.inJail = False
-        self.jailTurns = 0
-        self.getOutOfJailFreeCards = []
-        # The next 4 attributes are boolean statuses (statuses? statii?). Arguably I could have made one string attribute called 'status'. Ah, the joy of hindsight.
-        self.isDeveloping = False
-        self.isTrading = False
-        self.isMortgaging = False
-        self.normalGameplay = True
-        self.offer = []
-        self.bid = '0'
-        self.firstTimeInJail = True
-        self.paidOOJ = False #OOJ stands for Out Of Jail. It gets tedious to write.
 
-
-    def choosePiece(self, mousepos): # Lets the user choose a piece.
-        if 110 < mousepos[0] < 110 + 1*270:
-            if 276 < mousepos[1] < 276 + 128:
-                self.piece = boot
-                return (110, 276)
-            elif 427 < mousepos[1] < 427 + 128:
-                self.piece = iron
-                return (110, 427)
-        elif 110 + 1*270 < mousepos[0] < 110 + 2*270:
-            if 276 < mousepos[1] < 276 + 128:
-                self.piece = car
-                return (110 + 1*270, 276)
-            elif 427 < mousepos[1] < 427 + 128:
-                self.piece = ship
-                return (110 + 1 * 270, 427)
-        elif 110 + 2*270 < mousepos[0] < 110 + 3*270:
-            if 276 < mousepos[1] < 276 + 128:
-                self.piece = dog
-                return (110 + 2 * 270, 276)
-            elif 427 < mousepos[1] < 427 + 128:
-                self.piece = thimble
-                return (110 + 2 * 270, 427)
-        elif 110 + 3*270 < mousepos[0] < 110 + 4*270:
-            if 276 < mousepos[1] < 276 + 128:
-                self.piece = hat
-                return (110 + 3 * 270, 276)
-            elif 427 < mousepos[1] < 427 + 128:
-                self.piece = wheelbarrow
-                return (110 + 3 * 270, 427)
-        else:
-            return False
-
-    def getPos(self): # 'Boardpos' is an integer from 0-39 depending on what square you're on, but that has to be translated into x and y co-ords, hence this function.
-        if 0 <= self.boardpos < 10:
-            return [608-57*self.boardpos, 630]
-        elif 10 <= self.boardpos < 20:
-            return [15, 608-57*(self.boardpos-10)]
-        elif 20 <= self.boardpos < 30:
-            return [38 + 57*(self.boardpos-20), 15]
-        else:
-            return [630, 38 + 57*(self.boardpos-30)]
-
-    def move(self): # Moves players forward one place at a time. I'm pretty sure it gets called on every iteration of the loop.
-        if self.timeMoving > 0:
-            if self.boardpos == 39:
-                self.boardpos = 0
-                self.money += 200
-            else:
-                self.boardpos += 1
-            time.sleep(0.1)
-            self.timeMoving -= 1
 
 class Bank: # An identifier class. It is reminiscent of real life banks though.
     def __init__(self):
@@ -539,63 +464,7 @@ EveAlerts must be confirmed before Eve can do anything new, which is how the use
 
 '''
 
-class Alert:
-    def __init__ (self, heading, body):
-        self.heading = heading
-        self.body = body
-        self.confirmed = True
 
-        if self.heading == 'Chance' or self.heading == 'Community Chest':
-            self.type = 'confirm'
-            self.image = confirmAlertPic
-        elif self.heading.__contains__('Tutorial'):
-            self.type = 'confirm'
-            self.image = confirmAlertPic
-        elif self.heading == 'They see me rollin\'' or self.heading == 'Serial doubles-roller' or self.heading == 'Not-so-smooth criminal':
-            self.type = 'confirm'
-            self.image = confirmAlertPic
-        elif self.body.__contains__('?'):
-            self.type = 'choice'
-            self.image = choiceAlertPic
-        elif self.heading == 'Trade':
-            self.type = 'trade'
-            self.image = tradeAlertPic
-        elif self.heading == 'Mortgage' or self.heading == 'Unmortgage' or self.heading == 'Sell house?':
-            self.type = 'confirm'
-            self.image = confirmAlertPic
-        else:
-            self.type = 'basic'
-            self.image = alertPic
-        self.timePausing = 0
-
-    def write(self):
-        headingSize = 36
-        bodySize = 24
-        headingFont = pygame.font.Font('monopoly.ttf', headingSize)
-        bodyFont = pygame.font.Font('monopoly.ttf', bodySize)
-        lineSpacing = 6
-
-        heading = headingFont.render(self.heading, True, palette.darkGold)
-
-        lines = self.body.split('#')
-
-        screen.blit(self.image, (700, 0))
-        screen.blit(heading, (770, 224))
-        for i in range(len(lines)):
-            lines[i] = bodyFont.render(lines[i], True, palette.axolotl)
-            height = 224 + headingSize + lineSpacing + i*(bodySize+lineSpacing)
-            screen.blit(lines[i], (770, height))
-
-    def confirmOrDeny(self):
-        if self.type == 'choice':
-            if inCircle(pygame.mouse.get_pos(), [700+353, 433], 15):
-                return 'confirmed'
-            if inCircle(pygame.mouse.get_pos(), [700+394, 433], 15):
-                return 'denied'
-        elif self.type == 'confirm' or self.type == 'trade':
-            if inCircle(pygame.mouse.get_pos(), [700 + 394, 433], 15):
-                return 'confirmed'
-        return False
 
 class Auction:
     def __init__(self, prop):
@@ -1026,68 +895,12 @@ def getRentProperties():
 
 # These methods update the realWorth attribute of properties based on their neighbours
 
-def getWorthProperties():
-    for prop in properties:
-        prop.realWorth = prop.getInitialWorth()
-    for street in streets:
-        for currentProp in street:
-            neighboursOwnedByEve = 0
-            neighboursOwnedByUser = 0
-            for neighbour in street:
-                if neighbour != currentProp:
-                    if neighbour.owner == Eve:
-                        neighboursOwnedByEve += 1
-                    elif neighbour.owner == user:
-                        neighboursOwnedByUser += 1
-
-            if neighboursOwnedByEve > 0 and neighboursOwnedByUser > 0:
-                currentProp.realWorth -= 50
-            else:
-                currentProp.realWorth += 150 - (len(street)-neighboursOwnedByUser-neighboursOwnedByEve)*50
-
-            for house in range(currentProp.houses):
-                currentProp.realWorth += currentProp.houseWorth
-
-            if currentProp.mortgaged:
-                currentProp.realWorth -= currentProp.getPrice()//2
-
-def getWorthStations():
-    stations = [squares[5], squares[15], squares[25], squares[35]]
-    for station in stations:
-        station.realWorth = station.getInitialWorth()
-        neighboursOwnedByEve = 0
-        neighboursOwnedByUser = 0
-        for neighbour in stations:
-            if neighbour.owner == Eve:
-                neighboursOwnedByEve += 1
-            elif neighbour.owner == user:
-                neighboursOwnedByUser += 1
-        if neighboursOwnedByEve > 0 and neighboursOwnedByUser > 0:
-            station.realWorth += 25*(neighboursOwnedByEve + neighboursOwnedByUser)
-        else:
-            station.realWorth += 50 * (neighboursOwnedByEve + neighboursOwnedByUser)
-
-def getWorthUtilities():
-    utilities = [squares[12], squares[28]]
-    if utilities[1].owner != bank:
-        utilities[0].realWorth = utilities[0].getInitialWorth() + 50
-    if utilities[0].owner != bank:
-        utilities[1].realWorth = utilities[1].getInitialWorth() + 50
 
 
 
 # -------------------------------------------------------------------------------
 #PIECES
-boot = pygame.image.load('images/pieces/boot.png')
-car = pygame.image.load('images/pieces/car.png')
-dog = pygame.image.load('images/pieces/dog.png')
-hat = pygame.image.load('images/pieces/hat.png')
-iron = pygame.image.load('images/pieces/iron.png')
-ship = pygame.image.load('images/pieces/ship.png')
-thimble = pygame.image.load('images/pieces/thimble.png')
-wheelbarrow = pygame.image.load('images/pieces/wheelbarrow.png')
 
-pieces = [boot, car, dog, hat, iron, ship, thimble, wheelbarrow]
 
 
 # -------------------------------------------------------------------------------
